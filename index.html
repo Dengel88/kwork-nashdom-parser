@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Наш.Дом.РФ Парсер (50 000 ID) — Архитектура и MVP-пульт</title>
+<style>
+  :root {
+    --bg: #0b1120; --card: #111827; --card2: #1e293b;
+    --border: rgba(148, 163, 184, 0.18); --text: #f1f5f9;
+    --muted: #94a3b8; --accent: #38bdf8; --green: #10b981; --amber: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 24px; line-height: 1.5; }
+  .container { max-width: 1140px; margin: 0 auto; }
+  .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .brand { font-size: 22px; font-weight: 800; }
+  .brand span { color: var(--accent); }
+  .sub { font-size: 13px; color: var(--muted); }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: var(--accent); }
+  .badge.ok { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); color: var(--green); }
+
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .k-label { font-size: 12px; color: var(--muted); }
+  .k-val { font-size: 22px; font-weight: 800; margin-top: 4px; color: var(--accent); }
+  .k-val.green { color: var(--green); }
+
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+  .panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .btn { padding: 10px 18px; border-radius: 10px; border: none; background: linear-gradient(90deg, #0ea5e9, #10b981); color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .btn.sec { background: var(--card2); border: 1px solid var(--border); color: var(--text); }
+  .progress-bar { width: 100%; height: 12px; background: var(--card2); border-radius: 999px; overflow: hidden; margin: 12px 0; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #10b981); transition: width 0.2s; }
+  .log { background: #070b14; border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #7dd3fc; height: 130px; overflow-y: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-size: 12px; text-transform: uppercase; background: rgba(30, 41, 59, 0.45); }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #cbd5e1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <div class="brand">Наш.Дом.РФ <span>Парсер 50 000 ID</span></div>
+      <div class="sub">Однофайловый Python-скрипт (main.py) · Обход WAF/антибота · Блок «Динамика продаж» · Excel → Excel</div>
+    </div>
+    <div class="badges">
+      <div class="badge">1 файл: parser_nashdom.py</div>
+      <div class="badge">curl_cffi + asyncio + openpyxl</div>
+      <div class="badge ok">50 000 ID за ~5 ч</div>
+    </div>
+  </div>
+
+  <div class="grid-4">
+    <div class="card"><div class="k-label">Объём очереди</div><div class="k-val">50 000 ID</div></div>
+    <div class="card"><div class="k-label">Расчётная скорость</div><div class="k-val green">~2.8 – 3.5 ID/сек</div></div>
+    <div class="card"><div class="k-label">Оценка прогона</div><div class="k-val">4.5 – 5.5 ч</div></div>
+    <div class="card"><div class="k-label">Чекпоинт-сохранение</div><div class="k-val green">Каждые 500 ID</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <strong>Симулятор пакетного сбора (Excel → Excel)</strong>
+        <div class="sub">Архитектура: TLS-отпечаток Chrome (`curl_cffi`) + пул прокси + авто-повтор при 403/429 + сохранение в `.xlsx` без потери данных</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn" onclick="startSim()">Запустить тест-прогон</button>
+        <button class="btn sec" onclick="resetSim()">Сброс</button>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="pbar"></div></div>
+    <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:10px;">
+      <span id="pstatus">Ожидание запуска...</span>
+      <span id="pcount">0 / 50 000 ID</span>
+    </div>
+    <div class="log" id="log">Готов к работе. Входной файл: objects_50k.xlsx | Режим: async workers (12 потоков) + TLS impersonate chrome124</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <strong>Пример извлечённых данных (включая блок «Динамика продаж»)</strong>
+      <span class="badge ok">Формат на выходе: result_nashdom.xlsx</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>ID объекта</th>
+            <th>ЖК / Застройщик</th>
+            <th>Ввод в экспл.</th>
+            <th>Распродано (%)</th>
+            <th>Ср. цена м² (Динамика)</th>
+            <th>Остаток квартир</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">64596</td>
+            <td><strong>ЖК «Пример-Сити»</strong><br><span class="sub">ООО СЗ «СтройИнвест»</span></td>
+            <td>III кв. 2026</td>
+            <td>64.2%</td>
+            <td>198 400 ₽/м² (+4.1% за кв.)</td>
+            <td>142</td>
+          </tr>
+          <tr>
+            <td class="mono">64597</td>
+            <td><strong>ЖК «Северный Парк»</strong><br><span class="sub">ГК «Развитие»</span></td>
+            <td>I кв. 2027</td>
+            <td>41.8%</td>
+            <td>164 200 ₽/м² (+2.8% за кв.)</td>
+            <td>289</td>
+          </tr>
+          <tr>
+            <td class="mono">64602</td>
+            <td><strong>ЖК «Набережный»</strong><br><span class="sub">ООО СЗ «ДомСтрой»</span></td>
+            <td>IV кв. 2026</td>
+            <td>78.5%</td>
+            <td>221 900 ₽/м² (+6.0% за кв.)</td>
+            <td>61</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let timer = null;
+let count = 0;
+function startSim() {
+  if (timer) return;
+  const log = document.getElementById('log');
+  log.innerHTML = '[INFO] Загружено 50 000 ID из input.xlsx<br>[INFO] Инициализация пула сессий (curl_cffi + прокси-ротация)...<br>';
+  timer = setInterval(() => {
+    count = Math.min(50000, count + 2500);
+    const pct = (count / 50000) * 100;
+    document.getElementById('pbar').style.width = pct + '%';
+    document.getElementById('pcount').textContent = count.toLocaleString('ru-RU') + ' / 50 000 ID';
+    document.getElementById('pstatus').textContent = count < 50000 ? 'Сбор карточек и блока «Динамика продаж»...' : 'Готово! Выгружено в output.xlsx';
+    log.innerHTML += `[OK] Обработано ${count.toLocaleString('ru-RU')} ID | Чекпоинт сохранён | WAF 403: 0%<br>`;
+    log.scrollTop = log.scrollHeight;
+    if (count >= 50000) { clearInterval(timer); timer = null; }
+  }, 280);
+}
+function resetSim() {
+  clearInterval(timer); timer = null; count = 0;
+  document.getElementById('pbar').style.width = '0%';
+  document.getElementById('pcount').textContent = '0 / 50 000 ID';
+  document.getElementById('pstatus').textContent = 'Ожидание запуска...';
+  document.getElementById('log').textContent = 'Готов к работе. Входной файл: objects_50k.xlsx';
+}
+</script>
+</body>
+</html>
